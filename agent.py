@@ -1,7 +1,7 @@
 import asyncio
 import pyaudio
 import websockets
-import uuid
+from websockets.client import connect
 import base64
 import json
 import superu
@@ -46,13 +46,27 @@ async def listen_and_send(uri, streamId):
     stream = await asyncio.to_thread(
         pya.open, format=FORMAT, channels=CHANNELS, rate=SEND_SAMPLE_RATE,
         input=True, input_device_index=mic_index, frames_per_buffer=CHUNK_SIZE)
-    
+
     import urllib.parse
 
-    encoded_token = urllib.parse.quote(pluto['ws_url'].split('/')[-1], safe='')
-    uri = f"ws://pluto-ws.superu.ai/connect_call/{pluto['call_id']}/{encoded_token}"
+    # raw_url = pluto['ws_url']
+    # parts = raw_url.split('/')
+    # call_id = pluto['call_id']
+    # token = parts[-1]
+    # encoded_token = urllib.parse.quote(token, safe='')
 
-    async with websockets.connect(uri) as websocket:
+    # uri = f"wss://pluto-ws.superu.ai/connect_call/{call_id}/{encoded_token}"
+
+    # uri = pluto['ws_url'].replace("ws://", "wss://")
+
+    # encoded_token = urllib.parse.quote(pluto['ws_url'].split('/')[-1], safe='')
+    # uri = f"ws://pluto-ws.superu.ai/connect_call/{pluto['call_id']}/{encoded_token}"
+    headers = {
+        "Authorization": f"Bearer {os.getenv('SUPER_U_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+
+    async with connect(uri) as websocket:
         print("Connected to WebSocket. Streaming audio...")
         try:
             await asyncio.gather(
